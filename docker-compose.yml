@@ -1,0 +1,82 @@
+x-proxy-env: &proxy-env
+  HTTP_PROXY: ${DOCKER_RUNTIME_HTTP_PROXY:-}
+  HTTPS_PROXY: ${DOCKER_RUNTIME_HTTPS_PROXY:-}
+  NO_PROXY: ${DOCKER_RUNTIME_NO_PROXY:-localhost,127.0.0.1,::1,mysql,backend,frontend,host.docker.internal}
+  http_proxy: ${DOCKER_RUNTIME_HTTP_PROXY:-}
+  https_proxy: ${DOCKER_RUNTIME_HTTPS_PROXY:-}
+  no_proxy: ${DOCKER_RUNTIME_NO_PROXY:-localhost,127.0.0.1,::1,mysql,backend,frontend,host.docker.internal}
+
+x-proxy-build-args: &proxy-build-args
+  HTTP_PROXY: ${DOCKER_BUILD_HTTP_PROXY:-}
+  HTTPS_PROXY: ${DOCKER_BUILD_HTTPS_PROXY:-}
+  NO_PROXY: ${DOCKER_BUILD_NO_PROXY:-localhost,127.0.0.1,::1,mysql,backend,frontend,host.docker.internal}
+  http_proxy: ${DOCKER_BUILD_HTTP_PROXY:-}
+  https_proxy: ${DOCKER_BUILD_HTTPS_PROXY:-}
+  no_proxy: ${DOCKER_BUILD_NO_PROXY:-localhost,127.0.0.1,::1,mysql,backend,frontend,host.docker.internal}
+
+services:
+  mysql:
+    image: mysql:9.6
+    container_name: flight-ticketing-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      args: *proxy-build-args
+    container_name: flight-ticketing-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      <<: *proxy-env
+      DATABASE_URL: mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@mysql:3306/${MYSQL_DATABASE}?charset=utf8mb4
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES}
+      APP_NAME: ${APP_NAME}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args: *proxy-build-args
+    container_name: flight-ticketing-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      <<: *proxy-env
+      VITE_API_BASE_URL: http://localhost:8000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "5173:5173"
+
+volumes:
+  mysql_data:
