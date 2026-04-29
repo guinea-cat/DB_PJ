@@ -1,6 +1,6 @@
 # 航空票务系统 Demo
 
-如果你不知道如何运行，可以把链接https://github.com/guinea-cat/DB_PJ发给gemini接受指导。
+如果你不知道如何运行，可以把链接 `https://github.com/guinea-cat/DB_PJ` 发给gemini接受指导。
 
 这是一个面向课程设计的航空票务系统最小全链路实现，技术栈为 `FastAPI + SQLAlchemy + Vue 3 + MySQL/SQLite`。项目当前版本已经完成课程版三项升级：
 
