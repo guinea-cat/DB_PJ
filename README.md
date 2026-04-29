@@ -55,13 +55,14 @@ docker compose down -v
 docker compose up -d
 ```
 
-如需重新构建镜像：
+如需重新构建镜像：build等待三十秒左右都配置好了，然后打开 `http://localhost:5173` 即可 
 
 ```powershell
+docker compose down -v
 docker compose up --build -d
 ```
 
-## 演示账号
+## 演示账号和密码
 
 - 普通用户 1：`alice01 / user123`
 - 普通用户 2：`bob01 / user123`
@@ -75,9 +76,3 @@ docker compose up --build -d
 - 命中特价票时直接使用特价，不再叠加会员折扣和余票阶梯系数
 - 未支付订单默认保留 15 分钟，超时后在下一次关键业务触发前被懒处理释放
 
-## 相关文档
-
-- [docs/user-guide.md](/abs/path/c:/Users/19588/Desktop/ds_study/数据库引论/DB_PJ/docs/user-guide.md)
-- [docs/demo-script.md](/abs/path/c:/Users/19588/Desktop/ds_study/数据库引论/DB_PJ/docs/demo-script.md)
-- [docs/database/database-design.md](/abs/path/c:/Users/19588/Desktop/ds_study/数据库引论/DB_PJ/docs/database/database-design.md)
-- [docker-compose.yml](/abs/path/c:/Users/19588/Desktop/ds_study/数据库引论/DB_PJ/docker-compose.yml)
